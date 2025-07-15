@@ -1,0 +1,7 @@
+ต้องการทำงาน project next.js 
+โดยมีรหัสสี
+#8ccfcd
+#61a79e
+#eaeaea
+#ded2c5
+#252323
