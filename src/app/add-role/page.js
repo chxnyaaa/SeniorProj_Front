@@ -84,7 +84,7 @@ export default function AddBRolePage() {
       setModalInfo({
         type: "error",
         title: "Submission Failed",
-        message: "Failed to submit role. Please try again.",
+        message: "Pen name already Exist",
       })
       setShowModal(true)
     } finally {
@@ -136,7 +136,7 @@ export default function AddBRolePage() {
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Submit Role"}
+            {loading ? "Submitting..." : "Submit Pen name"}
           </Button>
         </div>
       </div>
