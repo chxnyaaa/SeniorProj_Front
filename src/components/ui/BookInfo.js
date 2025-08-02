@@ -2,8 +2,26 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Bookmark, Heart } from "lucide-react"
+import {updateFollow } from "@/lib/api/book"
 
-export default function BookInfo({ rating, setRating, isBookmarked, setIsBookmarked, isFollowing, setIsFollowing, title, author, description, authorAvatar, isStatusWriterEnded,isAuthor,id ,category}) {
+export default function BookInfo(
+  { rating
+    , setRating
+    , isBookmarked
+    , setIsBookmarked
+    , isFollowing
+    , setIsFollowing
+    , title
+    , author
+    , description
+    , authorAvatar
+    , isStatusWriterEnded
+    , isAuthor
+    , bookId 
+    , category
+    , followers
+    , userId
+}) {
   const renderStars = (currentRating) => {
     return Array.from({ length: 5 }, (_, i) => {
       const starIndex = i + 1
@@ -21,6 +39,20 @@ export default function BookInfo({ rating, setRating, isBookmarked, setIsBookmar
       )
     })
   }
+
+  const handleFollow = async () => {
+    try {
+      const res = await updateFollow(userId, bookId)
+      if (res.statusCode === 200) {
+        setIsFollowing(!isFollowing)
+      } else {
+        console.error("Failed to update follow status:", res.message)
+      }
+    } catch (err) {
+      console.error("Error updating follow status:", err)
+    }
+  }
+
 
   return (
     <div>
@@ -41,7 +73,7 @@ export default function BookInfo({ rating, setRating, isBookmarked, setIsBookmar
 
       {isAuthor ? (
         <a
-          href={`/add-books/${id}`} // แก้ id เป็นตัวแปรจริงจาก props/state
+          href={`/add-books/${bookId}`} // แก้ id เป็นตัวแปรจริงจาก props/state
           className="cursor-pointer p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center justify-center"
           aria-label="Edit book"
         >
@@ -81,14 +113,22 @@ export default function BookInfo({ rating, setRating, isBookmarked, setIsBookmar
 
         
         <span className="text-xl text-gray-300">{author}</span>
-        <Button
+         {!isAuthor ? (
+          <Button
           variant="outline"
           size="sm"
-          onClick={() => setIsFollowing(!isFollowing)}
+          onClick={() => handleFollow(!isFollowing)}
           className="text-white border border-teal-300 bg-transparent hover:bg-teal-300 hover:text-gray-800 rounded-[60px] px-3 py-1 text-xs"
         >
           {isFollowing ? "Following" : "Follow"}
         </Button>
+        ) : (
+          <>
+          <span className="text-xl text-gray-300">
+            Followers: {followers}
+          </span>
+          </>
+        )}
       </div>
 
       <p className="text-gray-300 text-lg leading-relaxed mb-6 max-w-3xl">

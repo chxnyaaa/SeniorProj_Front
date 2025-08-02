@@ -43,7 +43,7 @@ export default function UserProfileMenu() {
       >
         <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
           <img
-            src={user.user.profilePicture || "https://images.icon-icons.com/2429/PNG/512/google_logo_icon_147282.png"}
+            src={user.user.profilePicture || "https://bootstrapdemos.adminmart.com/modernize/dist/assets/images/profile/user-1.jpg"}
             alt="Profile"
             className="w-full h-full object-cover"
           />
@@ -58,7 +58,7 @@ export default function UserProfileMenu() {
             <div className="flex items-center gap-3 border-b border-gray-200 pb-3">
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
                 <img
-                  src={user.user.profilePicture || "https://images.icon-icons.com/2429/PNG/512/google_logo_icon_147282.png"}
+                  src={user.user.profilePicture || "https://bootstrapdemos.adminmart.com/modernize/dist/assets/images/profile/user-1.jpg"}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />

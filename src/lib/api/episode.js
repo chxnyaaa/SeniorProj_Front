@@ -1,43 +1,41 @@
 // lib/api/episode.js
 
+import axios from "axios"
 import { getBasicAuthHeader } from "@/lib/authHeader" // ✅ หากคุณย้ายออกไปแยกไฟล์
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 
-// 🔎 Get all episodes in a book
+
+// 📖 Get all episodes for a specific book
 export async function getEpisodeProduct(bookId) {
-  const res = await fetch(`${BASE_URL}/episode/${bookId}`, {
-    method: "GET",
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-  })
+  try {
+    const res = await axios.get(`${BASE_URL}/episode/${bookId}`, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
 
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to fetch episodes")
+    return res.data.data || []
+  } catch (error) {
+    const message = error.response?.data?.message || "Failed to fetch episodes"
+    throw new Error(message)
   }
-
-  const json = await res.json()
-  return json.data || []
 }
 
-// 🔎 Get one episode by ID
+// 🔍 Get a specific episode by bookId and episodeId
 export async function getEpisodeID(bookId, episodeId) {
-  const res = await fetch(`${BASE_URL}/episode/${bookId}/${episodeId}`, {
-    method: "GET",
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-  })
+  try {
+    const res = await axios.get(`${BASE_URL}/episode/${bookId}/${episodeId}`, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
 
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to fetch episode")
+    return res.data.data || []
+  } catch (error) {
+    const message = error.response?.data?.message || "Failed to fetch episode"
+    throw new Error(message)
   }
-
-  const json = await res.json()
-  return json.data || []
 }
 
 // ➕ Create new episode
@@ -54,21 +52,18 @@ export async function CreateEpisode(bookId, data) {
   if (data.file) formData.append("file", data.file)
   if (data.audio) formData.append("audio", data.audio)
 
-  const res = await fetch(`${BASE_URL}/episode/`, {
-    method: "POST",
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-    body: formData,
-  })
-
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to create episode")
+  try {
+    const res = await axios.post(`${BASE_URL}/episode/`, formData, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    return res.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || "Failed to create episode"
+    throw new Error(message)
   }
-
-  const json = await res.json()
-  return json.data
 }
 
 // ✏️ Update existing episode
@@ -85,19 +80,16 @@ export async function UpdateEpisode(bookId, episodeId, data) {
   if (data.file) formData.append("file", data.file)
   if (data.audio) formData.append("audio", data.audio)
 
-  const res = await fetch(`${BASE_URL}/episode/${episodeId}`, {
-    method: "PUT",
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-    body: formData,
-  })
-
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to update episode")
+  try {
+    const res = await axios.put(`${BASE_URL}/episode/${episodeId}`, formData, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    return res.data.data
+  } catch (error) {
+    const message = error.response?.data?.message || "Failed to update episode"
+    throw new Error(message)
   }
-
-  const json = await res.json()
-  return json.data
 }

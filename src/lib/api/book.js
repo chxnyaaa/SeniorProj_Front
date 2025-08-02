@@ -1,5 +1,5 @@
 // lib/api/book.js
-
+import axios from "axios"
 import { getBasicAuthHeader } from "@/lib/authHeader"
 
 
@@ -24,21 +24,23 @@ export async function createBook(data) {
     formData.append("cover", data.coverFile)
   }
 
-  const res = await fetch(`${BASE_URL}/product`, {
-    method: "POST",
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-    body: formData,
-  })
+  try {
+    const res = await axios.post(`${BASE_URL}/product`, formData, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+        // ไม่ต้องระบุ Content-Type: multipart/form-data — axios จัดการให้เองเมื่อใช้ FormData
+      },
+    })
 
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to create book")
+    return res.data
+
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to create book")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
   }
-
-  const json = await res.json()
-  return json.data
 }
 
 // ✏️ Update existing book
@@ -60,96 +62,141 @@ export async function updateBook(id, data) {
     formData.append("cover", data.coverFile)
   }
 
-  const res = await fetch(`${BASE_URL}/product/${id}`, {
-    method: "PUT",
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-    body: formData,
-  })
+  try {
+    const res = await axios.put(`${BASE_URL}/product/${id}`, formData, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+        // ไม่ต้องใส่ Content-Type เอง เพราะ axios จะจัดการให้
+      },
+    })
 
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to update book")
+    return res.data.data
+
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to update book")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
   }
-
-  const json = await res.json()
-  return json.data
 }
 
 // 📗 Get book by ID
 export async function getBookId(id) {
-  const res = await fetch(`${BASE_URL}/product/${id}`, {
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-  })
+  try {
+    const res = await axios.get(`${BASE_URL}/product/${id}`, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
 
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to fetch book")
+    return res.data.data
+
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch book")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
   }
-
-  const json = await res.json()
-  return json.data
 }
 
 // ✅ Update book "complete" status
 export async function updateIsComplete(id, isComplete) {
-  const res = await fetch(`${BASE_URL}/product/${id}/status`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: getBasicAuthHeader(),
-    },
-    body: JSON.stringify({ is_complete: isComplete }),
-  })
+  try {
+    const res = await axios.put(
+      `${BASE_URL}/product/${id}/status`,
+      { is_complete: isComplete },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: getBasicAuthHeader(),
+        },
+      }
+    )
 
-  if (!res.ok) {
-    const err = await res.json()
-    throw new Error(err.message || "Failed to update book status")
+    return res.data.data
+
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to update book status")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
   }
-
-  const json = await res.json()
-  return json.data
 }
 
-// 📚 Get all books
-// export async function getBooks() {
-//   const res = await fetch(`${BASE_URL}/product`, {
-//     headers: {
-//       Authorization: getBasicAuthHeader(),
-//     },
-//   })
-
-//   if (!res.ok) {
-//     const err = await res.json()
-//     throw new Error(err.message || "Failed to fetch books")
-//   }
-
-//   const json = await res.json()
-//   return json.data
-// }
-
-
 export async function getBooks({ category, page = 1, limit = 10, search = "" } = {}) {
-  const params = new URLSearchParams()
-  if (category) params.append("category", category)
-  if (page) params.append("page", page)
-  if (limit) params.append("limit", limit)
-  if (search) params.append("search", search)
+  try {
+    const res = await axios.get(`${BASE_URL}/product/`, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+      params: {
+        ...(category && { category }),
+        page,
+        limit,
+        ...(search && { search }),
+      },
+    })
 
-  const res = await fetch(`${BASE_URL}/product/?${params.toString()}`, {
-    headers: {
-      Authorization: getBasicAuthHeader(),
-    },
-  })
+    return {
+      data: res.data.data || [],
+      pagination: res.data.pagination || {},
+    }
 
-  if (!res.ok) throw new Error("Failed to fetch books")
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch books")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}
 
-  const json = await res.json()
-  return {
-    data: json.data || [],
-    pagination: json.pagination || {}
+export async function updateFollow(userId, bookId) {
+  try {
+    const res = await axios.post(
+      `${BASE_URL}/product/follow`,
+      {
+        user_id: userId,
+        book_id: bookId,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: getBasicAuthHeader(),
+        },
+      }
+    )
+    return res.data 
+
+  } catch (error) {
+    // ถ้า server ตอบกลับด้วย status code != 2xx
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to update follow status")
+    } else {
+      // ปัญหาเช่น network error
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}
+
+export async function getEpisodeId(bookId, episodeId) {
+  try {
+    const res = await axios.get(`${BASE_URL}/episode/${bookId}/${episodeId}`, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
+
+    return res.data
+
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch episode")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
   }
 }

@@ -1,17 +1,55 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { useParams } from "next/navigation"
+import { getEpisodeId } from "@/lib/api/book"
+import { Play, Pause, SkipBack, SkipForward, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Play, Pause, SkipBack, SkipForward, Volume2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
+const url = process.env.NEXT_PUBLIC_API_URL
+
 export default function ReaderPage() {
+  const params = useParams()
+  const bookId = params.book_id
+  const episodeId = params.view_id
+
+  const [title, setTitle] = useState("")
+  const [contentText, setContentText] = useState("")
+  const [audioUrl, setAudioUrl] = useState("")
+  const [coverUrl, setCoverUrl] = useState("")
+  const [fileUrl, setFileUrl] = useState("")
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState([75])
+
   const audioRef = useRef(null)
+
+  useEffect(() => {
+    const fetchBook = async () => {
+      try {
+        const data = await getEpisodeId(bookId, episodeId)
+        const ep = data?.data?.[0]
+        if (ep) {
+          setTitle(ep.title)
+          setContentText(ep.content_text)
+          if(ep.audio_url) {
+            setAudioUrl(url + ep.audio_url)
+          }
+          if(ep.cover_url) {
+            setCoverUrl(url + ep.cover_url)
+          }
+          if(ep.file_url) {
+            setFileUrl(url + ep.file_url)
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching book data:", err)
+      }
+    }
+    fetchBook()
+  }, [bookId, episodeId])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -19,26 +57,17 @@ export default function ReaderPage() {
 
     const updateTime = () => setCurrentTime(audio.currentTime)
     const updateDuration = () => setDuration(audio.duration)
-    const updateVolume = () => setVolume([audio.volume * 100])
 
     audio.addEventListener("timeupdate", updateTime)
     audio.addEventListener("loadedmetadata", updateDuration)
-    audio.addEventListener("volumechange", updateVolume)
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime)
       audio.removeEventListener("loadedmetadata", updateDuration)
-      audio.removeEventListener("volumechange", updateVolume)
     }
   }, [])
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
-
-  const handlePlayPause = () => {
+  const toggleAudio = () => {
     const audio = audioRef.current
     if (!audio) return
 
@@ -50,6 +79,12 @@ export default function ReaderPage() {
     setIsPlaying(!isPlaying)
   }
 
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
   const handleProgressChange = (value) => {
     const audio = audioRef.current
     if (audio) {
@@ -58,99 +93,94 @@ export default function ReaderPage() {
     }
   }
 
-  const handleVolumeChange = (value) => {
-    const audio = audioRef.current
-    if (audio) {
-      audio.volume = value[0] / 100
-      setVolume(value)
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-custom-bg text-white flex flex-col">
+    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-700">
-        <Link href="/book/1" className="inline-flex items-center text-mint-light hover:text-mint-dark">
+      <div className="p-4 border-b border-gray-300 bg-white">
+        <Link href={`/book/${bookId}`} className="inline-flex items-center text-blue-600 hover:underline">
           <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Book Details
+          กลับไปยังหน้ารายละเอียดหนังสือ
         </Link>
       </div>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">All The Devils</h1>
-          <h2 className="text-xl text-gray-300">#1 The Whispering Flame</h2>
+      {/* Content */}
+      <div className="flex-1 flex flex-col items-center justify-start p-8">
+        {/* Title */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-2">{title}</h1>
+          
+         {/* Content Text */}
+        {contentText && (
+          <>
+           {/* <div className="w-full max-w-4xl bg-white rounded-lg p-6 text-gray-800 shadow mb-8 leading-relaxed whitespace-pre-line"> */}
+            {contentText}
+           {/* </div> */}
+          </>
+        )}
         </div>
 
-        Content
-        <div className="w-full max-w-4xl bg-gray-light rounded-lg p-8 mb-8 text-gray-800 leading-relaxed">
-          <p className="mb-6">Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
-          <p className="mb-6">More paragraph content here...</p>
-          <p>Last paragraph for sample.</p>
-        </div>
-
-        <div className="w-full max-w-4xl bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-300 mb-8" style={{ height: "600px" }}>
-          <iframe
-            src="/pdfs/sample.pdf"
-            width="100%"
-            height="100%"
-            className="rounded-2xl"
-            style={{ border: "none" }}
-            title="Chapter PDF"
+        {/* Cover */}
+        {coverUrl && (
+          <img
+            src={coverUrl}
+            alt="cover"
+            className="w-full max-w-md h-auto object-cover rounded-lg shadow mb-8"
           />
-        </div>
-
+        )}
 
         {/* Audio Player */}
-        <div className="w-full max-w-2xl">
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <Button variant="ghost" size="sm" className="text-mint-light hover:text-mint-dark hover:bg-gray-700">
-              <SkipBack className="w-6 h-6" />
-            </Button>
-            <Button
-              onClick={handlePlayPause}
-              className="w-16 h-16 rounded-full bg-mint-light hover:bg-mint-dark text-gray-800 flex items-center justify-center"
-            >
-              {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
-            </Button>
-            <Button variant="ghost" size="sm" className="text-mint-light hover:text-mint-dark hover:bg-gray-700">
-              <SkipForward className="w-6 h-6" />
-            </Button>
-          </div>
+        {audioUrl && (
+          <div className="w-full max-w-2xl bg-white rounded-xl p-6 shadow border border-gray-200 mb-8">
+            <audio ref={audioRef} src={audioUrl} preload="metadata" className="hidden" />
 
-          {/* Progress Bar */}
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-sm text-gray-300 w-12">{formatTime(currentTime)}</span>
-            <div className="flex-1">
-              <Slider
-                value={[currentTime]}
-                max={duration || 100}
-                step={1}
-                onValueChange={handleProgressChange}
-              />
+            {/* Controls */}
+            <div className="flex items-center justify-center gap-6 mb-6">
+              <Button variant="ghost" size="sm">
+                <SkipBack className="w-6 h-6 text-gray-600" />
+              </Button>
+              <Button
+                onClick={toggleAudio}
+                className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+              >
+                {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
+              </Button>
+              <Button variant="ghost" size="sm">
+                <SkipForward className="w-6 h-6 text-gray-600" />
+              </Button>
             </div>
-            <span className="text-sm text-gray-300 w-12">{formatTime(duration)}</span>
-          </div>
 
-          {/* Volume */}
-          <div className="flex items-center justify-end gap-2">
-            <Volume2 className="w-4 h-4 text-gray-300" />
-            <div className="w-24">
-              <Slider
-                value={volume}
-                max={100}
-                step={1}
-                onValueChange={handleVolumeChange}
-              />
+            {/* Progress */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-500 w-12">{formatTime(currentTime)}</span>
+              <div className="flex-1">
+                <Slider
+                  value={[currentTime]}
+                  max={duration || 100}
+                  step={1}
+                  onValueChange={handleProgressChange}
+                />
+              </div>
+              <span className="text-sm text-gray-500 w-12">{formatTime(duration)}</span>
             </div>
           </div>
-        </div>
+        )}
+
+       
+
+        {/* PDF Viewer */}
+        {/* {fileUrl && (
+          <div className="w-full max-w-4xl bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-300 mb-8" style={{ height: "600px" }}>
+            <iframe
+              src={fileUrl}
+              width="100%"
+              height="100%"
+              className="rounded-2xl"
+              style={{ border: "none" }}
+              title="Chapter PDF"
+            />
+          </div>
+        )} */}
       </div>
-
-      {/* Audio element */}
-      <audio ref={audioRef} src="/audio/sample.mp3" className="hidden" preload="metadata" />
     </div>
   )
 }

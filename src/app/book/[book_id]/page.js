@@ -20,17 +20,17 @@ export default function BookDetailPage() {
   const [isAuthor, setIsAuthor] = useState(false)
   const [episodes, setEpisodes] = useState([])
   const [isStatusWriterEnded, setIsStatusWriterEnded] = useState(false)
-  const { user, logout } = useAuth()
+  const { user, logout, isLoading } = useAuth()
   const router = useRouter()
 
   
-  console.log("User:", user)
 
   useEffect(() => {
-    if (!user) {
-      router.push("/login") // ถ้าไม่ login ให้ redirect
-      return
-    }
+    if (isLoading) return
+    // if (!user) {
+    //   router.push("/login") // ถ้าไม่ login ให้ redirect
+    //   return
+    // }
     if (!id) return
 
     const fetchBook = async () => {
@@ -57,7 +57,7 @@ export default function BookDetailPage() {
     }
 
     fetchBook()
-  }, [id, user])
+  }, [id, user, isLoading])
 
   const handleUnlockEpisode = (eid) => {
     setEpisodes((prev) =>
@@ -122,12 +122,14 @@ export default function BookDetailPage() {
               authorAvatar={
                 book.avatar_url
                   ? `${process.env.NEXT_PUBLIC_API_URL}${book.avatar_url}`
-                  : "https://images.icon-icons.com/2429/PNG/512/google_logo_icon_147282.png"
+                  : "https://bootstrapdemos.adminmart.com/modernize/dist/assets/images/profile/user-1.jpg"
               }
               isStatusWriterEnded={isStatusWriterEnded}
               isAuthor={isAuthor}
-              id={id}
+              bookId={id}
               category={book.category || "Uncategorized"}
+              followers={book.followers || 0}
+              userId={user.user.id}
             />
           </div>
 

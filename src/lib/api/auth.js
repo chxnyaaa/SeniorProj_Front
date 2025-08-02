@@ -1,5 +1,5 @@
 // lib/auth.js
-
+import axios from "axios"
 import { getBasicAuthHeader } from "@/lib/authHeader"
 
 
@@ -7,71 +7,71 @@ export async function login({ email, password }) {
   const url = process.env.NEXT_PUBLIC_API_URL + "/login/"
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": getBasicAuthHeader(),
+    const response = await axios.post(
+      url,
+      {
+        Account: email, // ✅ ใช้ key "Account"
+        password,
       },
-      body: JSON.stringify({ Account: email, password }), // ใช้ key "Account"
-    })
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: getBasicAuthHeader(),
+        },
+      }
+    )
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || "Login failed")
-    }
-
-    return await response.json()
-  } catch (err) {
-    throw err
+    return response.data
+  } catch (error) {
+    const message = error.response?.data?.message || "Login failed"
+    throw new Error(message)
   }
 }
+
 
 export async function register(signupData) {
   const url = process.env.NEXT_PUBLIC_API_URL + "/signup/"
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": getBasicAuthHeader(),
-    },
-    body: JSON.stringify(signupData),
-  })
+  try {
+    const response = await axios.post(
+      url,
+      signupData,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: getBasicAuthHeader(),
+        },
+      }
+    )
 
-  if (!res.ok) {
-    const error = await res.json()
-    throw new Error(error.message || "Register failed")
-  }
-
-  const json = await res.json()
-  return {
-    statusCode: res.status,
-    ...json,
+    return {
+      statusCode: response.status,
+      ...response.data,
+    }
+  } catch (error) {
+    const message = error.response?.data?.message || "Register failed"
+    throw new Error(message)
   }
 }
 
 export async function updatePenName(penName, authorId) {
   const url = process.env.NEXT_PUBLIC_API_URL + "/profile/pen-name/"
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": getBasicAuthHeader(),
-    },
-    body: JSON.stringify({ pen_name: penName, userId: authorId }),
-  })
+  try {
+    const response = await axios.post(
+      url,
+      { pen_name: penName, userId: authorId },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: getBasicAuthHeader(),
+        },
+      }
+    )
 
-  if (!res.ok) {
-    const error = await res.json()
-    throw new Error(error.message || "Update pen name failed")
+    return response.data
+  } catch (error) {
+    const message = error.response?.data?.message || "Update pen name failed"
+    throw new Error(message)
   }
-
-  return await res.json()
 }
-
-
-   
-
-
