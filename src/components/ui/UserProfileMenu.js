@@ -13,7 +13,8 @@ export default function UserProfileMenu() {
   const router = useRouter()
 
   const handleLogout = (e) => {
-    e.preventDefault()
+    console.log('xxxxx')
+    // e.preventDefault()
     logout()
     router.push("/login")
   }

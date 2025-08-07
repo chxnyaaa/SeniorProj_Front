@@ -129,7 +129,7 @@ export default function BookDetailPage() {
               bookId={id}
               category={book.category || "Uncategorized"}
               followers={book.followers || 0}
-              userId={user.user.id}
+              userId={user?.user?.id || null}
             />
           </div>
 
