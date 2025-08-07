@@ -107,10 +107,13 @@ export default function AddBooks({ isEdit = false, editId = null }) {
     }
 
     try {
+      //รับจาก backend level การแสดงผล
       const result = isEdit
         ? await updateBook(editId, payload)
         : await createBook(payload)
-      const bookId = result?.id
+        console.log('test view = ',result)
+      const bookId = result.id || result.data.id || ''
+      // const bookId = result?.data?.id
       if (bookId) {
         router.push(`/book/${bookId}`)
       } else {

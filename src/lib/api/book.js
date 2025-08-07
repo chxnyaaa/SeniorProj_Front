@@ -32,7 +32,7 @@ export async function createBook(data) {
       },
     })
 
-    return res.data
+    return res.data.data
 
   } catch (error) {
     if (error.response) {
@@ -70,6 +70,8 @@ export async function updateBook(id, data) {
       },
     })
 
+    console.log(res.data.data);
+    //ตรวจสอบการรับค่าจาก back level การดึงจาก backend
     return res.data.data
 
   } catch (error) {
