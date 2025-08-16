@@ -43,6 +43,7 @@ export default function Header({ onSearch }) {
     }
   }, [])
 
+
   return (
     <header className="bg-custom-bg border-b border-white p-4">
       <div className="flex items-center justify-between">
@@ -79,9 +80,11 @@ export default function Header({ onSearch }) {
               <UserProfileMenu user={user} logout={handleLogout} />
             </>
           ) : (
+            <>
             <TextLink href="/login" className="text-mint-light hover:text-mint-dark transition-colors font-medium">
               Login / Signup
             </TextLink>
+            </>
           )}
         </div>
       </div>

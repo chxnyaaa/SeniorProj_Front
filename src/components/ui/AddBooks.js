@@ -4,9 +4,9 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import NoSSRSelect from "@/components/ui/NoSSRSelect"
 import { useRouter } from "next/navigation"
-import { createBook, updateBook, getBookId } from "@/lib/api/book"
+import { updateBook, getBookId } from "@/lib/api/book"
 import { useAuth } from "@/contexts/AuthContext"
-import { genreOptions, statusOptions } from "@/constants/selectOptions"
+import { genreOptions } from "@/constants/selectOptions"
 
 export default function AddBooks({ isEdit = false, editId = null }) {
   const { user } = useAuth()
@@ -15,38 +15,63 @@ export default function AddBooks({ isEdit = false, editId = null }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [categories, setCategories] = useState([])
-  const [coverFile, setCoverFile] = useState(null)
+  const [booksFile, setBooksFile] = useState(null)
   const [coverPreview, setCoverPreview] = useState(null)
   const [releaseDate, setReleaseDate] = useState("")
   const [status, setStatus] = useState("draft")
-  const authorId = user?.user?.id || null
+  const [authorId, setAuthorId] = useState(null)
+  const [loadingUser, setLoadingUser] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (user !== undefined) {
+      setLoadingUser(false)
+      setAuthorId(user?.id || null)
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!loadingUser && !user) {
+      router.push("/login")
+    }
+  }, [user, loadingUser, router])
 
   useEffect(() => {
     const fetchBookData = async () => {
       if (!isEdit || !editId || !user) return
       try {
-        const dataArr = await getBookId(editId)
-        const data = dataArr.product || {}
+        const res = await getBookId(editId)
+        const data = res.detail || {}
 
-        if (data) {
-          const url = process.env.NEXT_PUBLIC_API_URL || ""
+        if (data.user_id && data.user_id !== user.id) {
+          alert("You are not the owner of this book.")
+          router.push("/")
+          return
+        }
 
-          setTitle(data.title || "")
-          setDescription(data.description || "")
-          setReleaseDate(data.release_date ? data.release_date.slice(0, 10) : "")
-          setStatus(data.status || "draft")
+        const url = process.env.NEXT_PUBLIC_API_URL || ""
 
-          if (data.category) {
-            const categoryArr = data.category
-              .split(",")
-              .map((c) => ({ value: c.trim(), label: c.trim() }))
-            setCategories(categoryArr)
-          } else {
-            setCategories([])
+        setTitle(data.title || "")
+        setDescription(data.description || "")
+
+        if (Array.isArray(data.categories)) {
+          setCategories(data.categories.map(cat => ({
+            value: cat.name,
+            label: cat.name,
+          })))
+        } else {
+          setCategories([])
+        }
+
+       if (data.release_date) {
+            setReleaseDate(new Date(data.release_date).toISOString().split("T")[0])
+          }
+          if (data.status) {
+            setStatus(data.status)
           }
 
-          if (data.cover_url) setCoverPreview(`${url}${data.cover_url}`)
-          else setCoverPreview(null)
+        if (data.cover_image) {
+          setCoverPreview(`${url}/uploads/books/${data.cover_image}`)
         }
       } catch (err) {
         console.error("Error loading book:", err.message)
@@ -59,11 +84,7 @@ export default function AddBooks({ isEdit = false, editId = null }) {
 
   useEffect(() => {
     return () => {
-      if (
-        coverPreview &&
-        typeof coverPreview === "string" &&
-        coverPreview.startsWith("blob:")
-      ) {
+      if (coverPreview?.startsWith("blob:")) {
         URL.revokeObjectURL(coverPreview)
       }
     }
@@ -72,10 +93,10 @@ export default function AddBooks({ isEdit = false, editId = null }) {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (file && (file.type === "image/jpeg" || file.type === "image/png")) {
-      if (coverPreview && coverPreview.startsWith("blob:")) {
+      if (coverPreview?.startsWith("blob:")) {
         URL.revokeObjectURL(coverPreview)
       }
-      setCoverFile(file)
+      setBooksFile(file)
       setCoverPreview(URL.createObjectURL(file))
     } else {
       alert("Please upload .jpg or .png files only")
@@ -83,10 +104,10 @@ export default function AddBooks({ isEdit = false, editId = null }) {
   }
 
   const handleRemoveFile = () => {
-    if (coverPreview && coverPreview.startsWith("blob:")) {
+    if (coverPreview?.startsWith("blob:")) {
       URL.revokeObjectURL(coverPreview)
     }
-    setCoverFile(null)
+    setBooksFile(null)
     setCoverPreview(null)
   }
 
@@ -95,30 +116,39 @@ export default function AddBooks({ isEdit = false, editId = null }) {
       alert("You are not logged in")
       return
     }
+    if (!title.trim()) {
+      alert("Please enter the book title")
+      return
+    }
+
+    setSaving(true)
 
     const payload = {
+      bookId: editId || null,
       title,
       description,
+      categories: categories.map(cat => cat.value || cat).join(","),
+      booksFile,
       releaseDate,
       status,
-      categories,
-      coverFile,
-      authorId,
+      userId: authorId
     }
 
     try {
-      const result = isEdit
-        ? await updateBook(editId, payload)
-        : await createBook(payload)
-      const bookId = result?.id
-      if (bookId) {
-        router.push(`/book/${bookId}`)
-      } else {
-        throw new Error("Book ID not found after saving")
+      const result = await updateBook(payload)
+      if (result && (result.status_code === 201 || result.status_code === 200)) {
+        const bookId = result?.detail?.bookId || editId
+        if (bookId) {
+          router.push(`/add-books/${bookId}`)
+        } else {
+          throw new Error("Book ID not found after saving")
+        }
       }
     } catch (err) {
       console.error(err)
       alert("Unable to save the book")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -144,7 +174,7 @@ export default function AddBooks({ isEdit = false, editId = null }) {
               className="hidden"
             />
             {!coverPreview ? (
-              <div className="text-teal-400 text-center select-none h-100">
+              <div className="text-teal-400 text-center select-none">
                 <p className="mt-20 mb-1 text-lg font-semibold">
                   Click or drop file to upload
                 </p>
@@ -155,7 +185,7 @@ export default function AddBooks({ isEdit = false, editId = null }) {
                 <img
                   src={coverPreview}
                   alt="Cover Preview"
-                  className="w-100 h-90 object-cover rounded-lg shadow-md mb-3"
+                  className="w-full h-auto object-cover rounded-lg shadow-md mb-3"
                 />
                 <button
                   className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
@@ -218,11 +248,17 @@ export default function AddBooks({ isEdit = false, editId = null }) {
           <div>
             <label className="block text-sm mb-1 text-teal-300">Status</label>
             <NoSSRSelect
-              options={statusOptions}
-              value={statusOptions.find((opt) => opt.value === status)}
+              options={[
+                { value: "draft", label: "Draft" },
+                { value: "published", label: "Published" },
+                { value: "archived", label: "Archived" }
+              ]}
+              value={{
+                value: status,
+                label: status.charAt(0).toUpperCase() + status.slice(1)
+              }}
               onChange={(selected) => setStatus(selected.value)}
               className="text-black"
-              classNamePrefix="select"
             />
           </div>
         </div>
@@ -230,10 +266,11 @@ export default function AddBooks({ isEdit = false, editId = null }) {
 
       <div className="mt-6">
         <Button
-          className="bg-teal-500 text-white px-6 py-2 rounded-md hover:bg-teal-600"
+          disabled={saving}
+          className={`bg-teal-500 text-white px-6 py-2 rounded-md hover:bg-teal-600 ${saving ? "opacity-50 cursor-not-allowed" : ""}`}
           onClick={handleSubmit}
         >
-          {isEdit ? "Save Changes" : "Save Book"}
+          {saving ? "Saving..." : isEdit ? "Save Changes" : "Save Book"}
         </Button>
       </div>
     </div>

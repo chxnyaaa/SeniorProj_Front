@@ -18,10 +18,10 @@ export default function CustomAlertModal({
   if (!show) return null
 
   const iconMap = {
-    success: <CheckCircle className="text-green-500 w-10 h-10 mb-2" />,
-    error: <XCircle className="text-red-500 w-10 h-10 mb-2" />,
-    warning: <AlertTriangle className="text-yellow-500 w-10 h-10 mb-2" />,
-    info: <Info className="text-blue-500 w-10 h-10 mb-2" />,
+    success: <CheckCircle className="text-green-500 w-20 h-20 mb-2" />,
+    error: <XCircle className="text-red-500 w-20 h-20 mb-2" />,
+    warning: <AlertTriangle className="text-yellow-500 w-20 h-20 mb-2" />,
+    info: <Info className="text-blue-500 w-20 h-20 mb-2" />,
   }
 
   const colorMap = {

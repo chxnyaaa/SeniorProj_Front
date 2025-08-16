@@ -54,18 +54,16 @@ export default function AddBRolePage() {
     setLoading(true)
     try {
       const data = await updatePenName(penName, user.user.id)
-
       if (data.statusCode === 200 || data.statusCode === 201) {
-      
-        const updatedUser = {
-              ...user,
-              user: {
-                ...user.user,
-                role: "author", // หรือ "2", แล้วแต่ระบบคุณใช้ string หรือ number
-              },
-            }
-        setUser(updatedUser)
-
+         const updatedUser = {
+            ...user,
+            user: {
+              ...user.user,
+              role: "author", // หรือ "2", แล้วแต่ระบบคุณใช้ string หรือ number
+            },
+          }
+          setUser(updatedUser)
+        // console.log("Updated User:", set_role)
         setModalInfo({
           type: "success",
           title: "Role Updated",
@@ -84,7 +82,7 @@ export default function AddBRolePage() {
       setModalInfo({
         type: "error",
         title: "Submission Failed",
-        message: "Pen name already Exist",
+        message: "Failed to submit role. Please try again.",
       })
       setShowModal(true)
     } finally {
@@ -136,7 +134,7 @@ export default function AddBRolePage() {
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Submit Pen name"}
+            {loading ? "Submitting..." : "Submit Role"}
           </Button>
         </div>
       </div>
