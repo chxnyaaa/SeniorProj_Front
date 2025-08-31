@@ -4,13 +4,13 @@ import { getBasicAuthHeader } from "@/lib/authHeader"
 
 
 export async function login({ email, password }) {
-  const url = process.env.NEXT_PUBLIC_API_URL + "/login/"
+  const url = process.env.NEXT_PUBLIC_API_URL + "/api/auth/login"
 
   try {
     const response = await axios.post(
       url,
       {
-        Account: email, // ✅ ใช้ key "Account"
+        email, // ✅ ใช้ key "Account"
         password,
       },
       {
@@ -29,28 +29,20 @@ export async function login({ email, password }) {
 }
 
 
+
 export async function register(signupData) {
-  const url = process.env.NEXT_PUBLIC_API_URL + "/signup/"
-
+  const url = process.env.NEXT_PUBLIC_API_URL + "/api/auth/register";
   try {
-    const response = await axios.post(
-      url,
-      signupData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: getBasicAuthHeader(),
-        },
-      }
-    )
-
-    return {
-      statusCode: response.status,
-      ...response.data,
-    }
+    const response = await axios.post(url, signupData, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: getBasicAuthHeader(),
+      },
+    });
+    return response.data;
   } catch (error) {
-    const message = error.response?.data?.message || "Register failed"
-    throw new Error(message)
+    const message = error.response?.data?.detail || "Register failed";
+    return { success: false, error: message };
   }
 }
 

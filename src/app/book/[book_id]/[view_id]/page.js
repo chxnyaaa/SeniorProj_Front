@@ -2,185 +2,182 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
-import { getEpisodeId } from "@/lib/api/book"
-import { Play, Pause, SkipBack, SkipForward, ArrowLeft } from "lucide-react"
+import { Play, Pause } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
+import { getEpisodeId } from "@/lib/api/book"
+import { useRouter } from "next/navigation"
 
 const url = process.env.NEXT_PUBLIC_API_URL
 
 export default function ReaderPage() {
+  const { user } = useAuth()
   const params = useParams()
   const bookId = params.book_id
   const episodeId = params.view_id
+  const [episode, setEpisode] = useState(null)
+  const [loadingUser, setLoadingUser] = useState(true)
+  const router = useRouter()
+  const audioRef = useRef(null)
 
-  const [title, setTitle] = useState("")
-  const [contentText, setContentText] = useState("")
-  const [audioUrl, setAudioUrl] = useState("")
-  const [coverUrl, setCoverUrl] = useState("")
-  const [fileUrl, setFileUrl] = useState("")
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
 
-  const audioRef = useRef(null)
+  // ฟังก์ชันสำหรับ play/pause
+  const handlePlayPause = () => {
+    if (!audioRef.current) return
 
-  useEffect(() => {
-    const fetchBook = async () => {
-      try {
-        const data = await getEpisodeId(bookId, episodeId)
-        const ep = data?.data?.[0]
-        if (ep) {
-          setTitle(ep.title)
-          setContentText(ep.content_text)
-          if(ep.audio_url) {
-            setAudioUrl(url + ep.audio_url)
-          }
-          if(ep.cover_url) {
-            setCoverUrl(url + ep.cover_url)
-          }
-          if(ep.file_url) {
-            setFileUrl(url + ep.file_url)
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching book data:", err)
-      }
+    if (isPlaying) {
+      audioRef.current.pause()
+      setIsPlaying(false)
+    } else {
+      audioRef.current.play()
+      setIsPlaying(true)
     }
-    fetchBook()
-  }, [bookId, episodeId])
+  }
 
+  // อัพเดตเวลาปัจจุบัน
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
-    const updateTime = () => setCurrentTime(audio.currentTime)
-    const updateDuration = () => setDuration(audio.duration)
+    const updateTime = () => {
+      setCurrentTime(audio.currentTime)
+    }
+
+    const setAudioDuration = () => {
+      setDuration(audio.duration)
+    }
 
     audio.addEventListener("timeupdate", updateTime)
-    audio.addEventListener("loadedmetadata", updateDuration)
+    audio.addEventListener("loadedmetadata", setAudioDuration)
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime)
-      audio.removeEventListener("loadedmetadata", updateDuration)
+      audio.removeEventListener("loadedmetadata", setAudioDuration)
     }
-  }, [])
+  }, [episode])
 
-  const toggleAudio = () => {
+  // เพลงจบแล้ว reset
+  useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
-    if (isPlaying) {
-      audio.pause()
-    } else {
-      audio.play()
+    const handleEnded = () => {
+      setIsPlaying(false)
+      setCurrentTime(0)
     }
-    setIsPlaying(!isPlaying)
+    audio.addEventListener("ended", handleEnded)
+
+    return () => {
+      audio.removeEventListener("ended", handleEnded)
+    }
+  }, [])
+
+  // เลื่อนเวลาผ่าน Slider
+const handleSeek = (value) => {
+  if (audioRef.current) {
+    audioRef.current.currentTime = value
+    setCurrentTime(value)
+  }
+}
+
+  useEffect(() => {
+    if (user !== undefined) {
+      setLoadingUser(false)
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (!loadingUser && !user) {
+      router.push("/login")
+    }
+
+    async function fetchEpisode() {
+      try {
+        const res = await getEpisodeId(bookId, episodeId)
+        if (res.status_code === 200) {
+          setEpisode(res.detail)
+        }
+      } catch (error) {
+        console.error("Error fetching episode:", error)
+      }
+    }
+
+    fetchEpisode()
+  }, [user, loadingUser, router])
+
+  if (loadingUser) {
+    return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>
   }
 
+  if (!user) {
+    return null
+  }
+
+  // ฟังก์ชันแปลงเวลาวินาทีเป็น mm:ss
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
-
-  const handleProgressChange = (value) => {
-    const audio = audioRef.current
-    if (audio) {
-      audio.currentTime = value[0]
-      setCurrentTime(value[0])
-    }
+    if (isNaN(seconds)) return "00:00"
+    const m = Math.floor(seconds / 60)
+    const s = Math.floor(seconds % 60)
+    return `${m < 10 ? "0" + m : m}:${s < 10 ? "0" + s : s}`
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-300 bg-white">
-        <Link href={`/book/${bookId}`} className="inline-flex items-center text-blue-600 hover:underline">
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          กลับไปยังหน้ารายละเอียดหนังสือ
-        </Link>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 flex flex-col items-center justify-start p-8">
-        {/* Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold mb-2">{title}</h1>
-          
-         {/* Content Text */}
-        {contentText && (
-          <>
-           {/* <div className="w-full max-w-4xl bg-white rounded-lg p-6 text-gray-800 shadow mb-8 leading-relaxed whitespace-pre-line"> */}
-            {contentText}
-           {/* </div> */}
-          </>
-        )}
-        </div>
-
-        {/* Cover */}
-        {coverUrl && (
-          <img
-            src={coverUrl}
-            alt="cover"
-            className="w-full max-w-md h-auto object-cover rounded-lg shadow mb-8"
-          />
-        )}
-
-        {/* Audio Player */}
-        {audioUrl && (
-          <div className="w-full max-w-2xl bg-white rounded-xl p-6 shadow border border-gray-200 mb-8">
-            <audio ref={audioRef} src={audioUrl} preload="metadata" className="hidden" />
-
-            {/* Controls */}
-            <div className="flex items-center justify-center gap-6 mb-6">
-              <Button variant="ghost" size="sm">
-                <SkipBack className="w-6 h-6 text-gray-600" />
-              </Button>
-              <Button
-                onClick={toggleAudio}
-                className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
-              >
-                {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8 ml-1" />}
-              </Button>
-              <Button variant="ghost" size="sm">
-                <SkipForward className="w-6 h-6 text-gray-600" />
-              </Button>
-            </div>
-
-            {/* Progress */}
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500 w-12">{formatTime(currentTime)}</span>
-              <div className="flex-1">
-                <Slider
-                  value={[currentTime]}
-                  max={duration || 100}
-                  step={1}
-                  onValueChange={handleProgressChange}
-                />
+    <>
+      {!loadingUser && episode && (
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 flex flex-col items-center">
+            {/* รูปปก */}
+            {episode.cover ? (
+              <img
+                src={`${url}/uploads/cover/${episode.cover}`}
+                alt={episode.title}
+                className="w-64 h-64 rounded-lg object-cover mb-6 shadow-md"
+              />
+            ) : (
+              <div className="w-64 h-64 bg-gray-300 rounded-lg flex items-center justify-center mb-6 text-gray-500">
+                No Cover Image
               </div>
-              <span className="text-sm text-gray-500 w-12">{formatTime(duration)}</span>
+            )}
+
+            {/* ชื่อเรื่อง */}
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2 text-center">{episode.title}</h1>
+
+            {/* รายละเอียด */}
+            <p className="text-gray-600 text-center mb-6 whitespace-pre-wrap">
+              {episode.content || "No description available."}
+            </p>
+
+            {/* <audio ref={audioRef} src={`${url}/uploads/audio/${episode.audio_id}`} preload="metadata" className="hidden" /> */}
+            <audio ref={audioRef} src={`${episode.audio_url}`} preload="metadata" className="hidden" />
+
+            {/* แสดงเวลาปัจจุบัน และ Slider */}
+            <div className="w-full mb-4">
+             <Slider
+                min={0}
+                max={duration}
+                value={[currentTime]}             // ส่งเป็น array เดียว
+                onValueChange={(val) => handleSeek(val[0])}  // รับ array แล้วดึง val[0]
+              />
+              <div className="flex justify-between text-sm text-gray-600 mt-1 px-1 select-none">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
             </div>
-          </div>
-        )}
 
-       
-
-        {/* PDF Viewer */}
-        {/* {fileUrl && (
-          <div className="w-full max-w-4xl bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-300 mb-8" style={{ height: "600px" }}>
-            <iframe
-              src={fileUrl}
-              width="100%"
-              height="100%"
-              className="rounded-2xl"
-              style={{ border: "none" }}
-              title="Chapter PDF"
-            />
+            {/* ปุ่มเล่น/หยุด */}
+            <Button
+              onClick={handlePlayPause}
+              className="w-20 h-20 rounded-full bg-mint-light hover:bg-mint-dark text-gray-800 flex items-center justify-center"
+            >
+              {isPlaying ? <Pause className="w-16 h-16" /> : <Play className="w-16 h-16 ml-1" />}
+            </Button>
           </div>
-        )} */}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   )
 }

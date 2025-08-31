@@ -6,9 +6,9 @@ export default function BookGrid({ books }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 mb-8">
       {books.map((book, index) => {
-        const coverSrc = book.cover_url?.startsWith("http")
-          ? book.cover_url
-          : `${process.env.NEXT_PUBLIC_API_URL}${book.cover_url || "/placeholder.svg"}`
+        const coverSrc = book.cover_image?.startsWith("http")
+          ? book.cover_image
+          : `${process.env.NEXT_PUBLIC_API_URL}/uploads/books/${book.cover_image || "/placeholder.svg"}`
 
         return (
           <div key={book.id || index} className="flex flex-col items-center group cursor-pointer">
@@ -24,7 +24,7 @@ export default function BookGrid({ books }) {
             <h3 className="text-white text-sm text-center mb-1 line-clamp-2">
               {book.title}
             </h3>
-            <RatingStars rating={book.score || 0} />
+            <RatingStars rating={book.avg_rating || 0} />
           </div>
         )
       })}

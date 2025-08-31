@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect } from "react"
 import Sidebar from "@/components/ui/Sidebar"
 import Header from "@/components/ui/Header"
 import GenreFilter from "@/components/ui/GenreFilter"
@@ -9,27 +9,16 @@ import { getBooks, checkin } from "@/lib/api/book"
 import { genreOptions } from "@/constants/selectOptions"
 import CustomAlertModal from "@/components/ui/CustomAlertModal"
 
-// ฟังก์ชัน debounce ช่วยหน่วงเวลา เพื่อไม่ให้เรียก API ถี่เกินไป
-function debounce(func, wait) {
-  let timeout
-  return (...args) => {
-    clearTimeout(timeout)
-    timeout = setTimeout(() => func(...args), wait)
-  }
-}
-
 export default function LibraryPage() {
-  // State ต่าง ๆ
   const [currentlyPlaying, setCurrentlyPlaying] = useState(false)
-  const [booksByGenre, setBooksByGenre] = useState({}) // เก็บหนังสือตาม genre
-  const [pagesByGenre, setPagesByGenre] = useState({}) // เก็บหน้าปัจจุบันแต่ละ genre
-  const [loadingByGenre, setLoadingByGenre] = useState({}) // สถานะ loading แยกตาม genre
-  const [selectedGenres, setSelectedGenres] = useState([]) // genre ที่เลือก
-  const [searchTerm, setSearchTerm] = useState("") // ข้อความ search input
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("") // searchTerm ที่ debounce แล้ว
+  const [booksByGenre, setBooksByGenre] = useState({})
+  const [pagesByGenre, setPagesByGenre] = useState({})
+  const [loadingByGenre, setLoadingByGenre] = useState({})
+  const [selectedGenres, setSelectedGenres] = useState([])
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const [userData, setUserData] = useState(null) // ข้อมูล user จาก sessionStorage
-  const [hasCheckedIn, setHasCheckedIn] = useState(false) // เช็คว่า check-in แล้วหรือยัง
+  const [userData, setUserData] = useState(null)
+  const [hasCheckedIn, setHasCheckedIn] = useState(false)
 
   const [showModal, setShowModal] = useState(false)
   const [modalInfo, setModalInfo] = useState({
@@ -38,7 +27,7 @@ export default function LibraryPage() {
     message: "",
   })
 
-  // โหลด user จาก sessionStorage ครั้งเดียวตอน mount
+  // --------- Load user from sessionStorage ----------
   useEffect(() => {
     const storedUser = sessionStorage.getItem("user")
     if (storedUser) {
@@ -50,11 +39,11 @@ export default function LibraryPage() {
     }
   }, [])
 
-  // เช็คอิน user ครั้งแรกหลังโหลด userData
+  // --------- Check-in after login (run once) ----------
   useEffect(() => {
     async function checkInUser() {
-
       if (!userData || hasCheckedIn) return
+
       try {
         const res = await checkin(userData.id)
         if (res.status_code === 200) {
@@ -70,22 +59,11 @@ export default function LibraryPage() {
         console.error("Check-in error:", error)
       }
     }
+
     checkInUser()
   }, [userData, hasCheckedIn])
 
-  // debounce การเปลี่ยนแปลง searchTerm ก่อนอัพเดต debouncedSearchTerm
-  const debouncedSetSearchTerm = useCallback(
-    debounce((val) => {
-      setDebouncedSearchTerm(val)
-    }, 500),
-    []
-  )
-
-  useEffect(() => {
-    debouncedSetSearchTerm(searchTerm)
-  }, [searchTerm, debouncedSetSearchTerm])
-
-  // ฟังก์ชันโหลดหนังสือตาม genre และหน้า
+  // --------- Fetch books per genre ----------
   async function fetchBooksForGenre(genre, page = 1) {
     setLoadingByGenre((prev) => ({ ...prev, [genre]: true }))
 
@@ -94,12 +72,12 @@ export default function LibraryPage() {
         category: genre,
         limit: 20,
         page,
-        search: debouncedSearchTerm,
+        search: searchTerm,
       })
 
+      console.log(`genre: ${genre}, page: ${page}, response:`, response)
 
-      // อัพเดตข้อมูลหนังสือและหน้าปัจจุบันสำหรับ genre นั้น ๆ
-      setBooksByGenre((prev) => ({ ...prev, [genre]: response.data || [] }))
+      setBooksByGenre((prev) => ({ ...prev, [genre]: response.data }))
       setPagesByGenre((prev) => ({ ...prev, [genre]: page }))
     } catch (error) {
       console.error(`Failed to fetch books for genre ${genre}`, error)
@@ -108,7 +86,7 @@ export default function LibraryPage() {
     }
   }
 
-  // โหลดหนังสือเมื่อ selectedGenres หรือ debouncedSearchTerm เปลี่ยนแปลง
+  // --------- Fetch initial books + on search/genre change ----------
   useEffect(() => {
     async function fetchInitialBooks() {
       const genresToFetch =
@@ -116,13 +94,15 @@ export default function LibraryPage() {
           ? selectedGenres
           : genreOptions.map((g) => g.value)
 
-      // โหลดหนังสือพร้อมกันทุก genre ด้วย Promise.all
-      await Promise.all(genresToFetch.map((genre) => fetchBooksForGenre(genre, 1)))
+      for (const genre of genresToFetch) {
+        await fetchBooksForGenre(genre, 1)
+      }
     }
-    fetchInitialBooks()
-  }, [debouncedSearchTerm, selectedGenres])
 
-  // UI helper สำหรับ toggle genre
+    fetchInitialBooks()
+  }, [searchTerm, selectedGenres])
+
+  // --------- UI Helpers ----------
   function toggleGenre(genre) {
     setSelectedGenres((prev) =>
       prev.includes(genre)
@@ -143,7 +123,6 @@ export default function LibraryPage() {
     setShowModal(false)
   }
 
-  // แสดง loading ถ้ามี genre ไหนกำลังโหลด
   if (Object.values(loadingByGenre).some(Boolean)) {
     return <div className="text-white p-6">Loading...</div>
   }
@@ -176,9 +155,9 @@ export default function LibraryPage() {
             clearSelection={clearGenres}
           />
 
-          {debouncedSearchTerm && (
+          {searchTerm && (
             <div className="text-white mb-4">
-              ผลการค้นหา: <strong>{debouncedSearchTerm}</strong>
+              ผลการค้นหา: <strong>{searchTerm}</strong>
             </div>
           )}
 

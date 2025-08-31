@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Bookmark, Heart } from "lucide-react"
-import {updateFollow } from "@/lib/api/book"
+import {updateFollow, updateRating } from "@/lib/api/book"
 
 export default function BookInfo(
   { rating
@@ -22,6 +22,8 @@ export default function BookInfo(
     , followers
     , userId
 }) {
+
+
   const renderStars = (currentRating) => {
     return Array.from({ length: 5 }, (_, i) => {
       const starIndex = i + 1
@@ -29,7 +31,7 @@ export default function BookInfo(
         <span
           key={i}
           className={`text-xl cursor-pointer ${starIndex <= currentRating ? "text-mint-light" : "text-gray-600"}`}
-          onClick={() => setRating(starIndex)}
+          onClick={() => handleRating(starIndex)}
           role="button"
           tabIndex={0}
           aria-label={`Set rating to ${starIndex}`}
@@ -40,10 +42,23 @@ export default function BookInfo(
     })
   }
 
+  
+const handleRating = async (newRating) => {
+    setRating(newRating)
+    
+      const res = await updateRating(userId, bookId, newRating, "")
+      if (res.status_code === 200) {
+        console.log("Rating updated successfully")
+      } else {
+        console.error("Failed to update rating:", res.message)
+      }
+}
   const handleFollow = async () => {
     try {
       const res = await updateFollow(userId, bookId)
-      if (res.statusCode === 200) {
+      console.log("Follow status updated:", res)
+      if (res.status_code == 200) {
+        console.log("Follow status updated successfully")
         setIsFollowing(!isFollowing)
       } else {
         console.error("Failed to update follow status:", res.message)
@@ -52,7 +67,6 @@ export default function BookInfo(
       console.error("Error updating follow status:", err)
     }
   }
-
 
   return (
     <div>
@@ -71,7 +85,7 @@ export default function BookInfo(
             {title}
         </h1>
 
-      {isAuthor ? (
+          {isAuthor ? (
         <a
           href={`/add-books/${bookId}`} // แก้ id เป็นตัวแปรจริงจาก props/state
           className="cursor-pointer p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center justify-center"
@@ -81,24 +95,27 @@ export default function BookInfo(
             Edit
          </button>
         </a>
+
       ) : (
-        
-        <span
-          onClick={() => setIsBookmarked(!isBookmarked)}
-          className="cursor-pointer p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center justify-center"
-          role="button"
-          tabIndex={0}
-          aria-pressed={isBookmarked}
-          aria-label={isBookmarked ? "Unbookmark" : "Bookmark"}
-        >
+        <></>
+      )}
+
+        {/* <span
+            onClick={() => setIsBookmarked(!isBookmarked)}
+            className="cursor-pointer p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center justify-center"
+            role="button"
+            tabIndex={0}
+            aria-pressed={isBookmarked}
+            aria-label={isBookmarked ? "Unbookmark" : "Bookmark"}
+          >
           <Bookmark
             className={`w-6 h-6 transition-colors duration-200 ${
               isBookmarked ? "text-mint-light" : "text-gray-400"
             }`}
             fill={isBookmarked ? "currentColor" : "none"}
           />
-        </span>
-      )}
+        </span> */}
+
 
         </div>
 
@@ -124,9 +141,9 @@ export default function BookInfo(
         </Button>
         ) : (
           <>
-          <span className="text-xl text-gray-300">
+          {/* <span className="text-xl text-gray-300">
             Followers: {followers}
-          </span>
+          </span> */}
           </>
         )}
       </div>
@@ -141,23 +158,24 @@ export default function BookInfo(
       </div>
 
       <div className="flex items-center gap-3">
-        <Heart className="w-5 h-5 text-mint-light" />
-         <div className="flex gap-2">
-        {category ? (
-          category.split(",").map((cat, index) => (
+      <Heart className="w-5 h-5 text-mint-light" />
+      <div className="flex gap-2">
+        {category && category.length > 0 ? (
+          category.map((cat) => (
             <Badge
-              key={index}
+              key={cat.id}
               variant="outline"
               className="border-gray-600 text-gray-300 hover:border-mint-light cursor-default"
             >
-              {cat.trim()}
+              {cat.name}
             </Badge>
           ))
         ) : (
-          <span className="text-gray-500 italic">No categories</span>
+          <span className="text-gray-500 italic">No category</span>
         )}
       </div>
-      </div>
+    </div>
+
 
      
 

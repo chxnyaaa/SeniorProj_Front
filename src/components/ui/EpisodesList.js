@@ -1,7 +1,10 @@
 import EpisodeItem from "@/components/ui/EpisodeItem"
 import TextLink from "@/components/ui/TextLink"
+import { getCoins, getHistoryPurchase, BayPurchase } from "@/lib/api/book"
 export default function EpisodesList({ episodes, onUnlock, isAuthor,id }) {
 
+
+  // console.log("EpisodesList episodes:", episodes)
   return (
    <>
     <div className="space-y-4">

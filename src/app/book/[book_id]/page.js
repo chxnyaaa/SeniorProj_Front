@@ -5,10 +5,10 @@ import BookInfo from "@/components/ui/BookInfo"
 import EpisodesList from "@/components/ui/EpisodesList"
 import Sidebar from "@/components/ui/Sidebar"
 import Header from "@/components/ui/Header"
-import { getBookId,updateIsComplete} from "@/lib/api/book"
-import { getEpisodeProduct } from "@/lib/api/episode"
-import { useParams,useRouter  } from "next/navigation"
+import { getBookId, updateIsComplete, getIsFollowing } from "@/lib/api/book"
+import { useParams, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
+
 export default function BookDetailPage() {
   const params = useParams()
   const id = params.book_id
@@ -23,12 +23,12 @@ export default function BookDetailPage() {
   const { user, logout, isLoading } = useAuth()
   const router = useRouter()
 
-  
 
   useEffect(() => {
     if (isLoading) return
+    // ถ้าต้องการ redirect ไป login ถ้าไม่มี user ให้ uncomment ด้านล่าง
     // if (!user) {
-    //   router.push("/login") // ถ้าไม่ login ให้ redirect
+    //   router.push("/login")
     //   return
     // }
     if (!id) return
@@ -36,21 +36,24 @@ export default function BookDetailPage() {
     const fetchBook = async () => {
       try {
         const dataArr = await getBookId(id)
-        const data = dataArr.product || {}
-        
-        if (user && user.user && user.user.id && data.author_id) {
-          if (user.user.id === data.author_id) {
-            if(data.author_id == user.user.id){
-              console.log("User is the author of this book")
-              setIsAuthor(true)
-            }
-          }
-        }
-        setIsStatusWriterEnded(data.is_complete || false)
-        setBook(data)
-        setEpisodes(dataArr.episodes || []) // ใช้ [] ถ้าไม่มี
+        const data = dataArr.detail || {}
+        setRating(data.avg_rating || 0)
 
       
+        if (user && user.id && data.user_id) {
+          if (user.id == data.user_id) {
+            setIsAuthor(true)
+          } else {
+            const dataFollowing = await getIsFollowing(user.id, data.id)
+            setIsFollowing(dataFollowing.detail.isFollowing || false)
+            setRating(dataFollowing.detail.ratings || 0)
+            setIsAuthor(false)
+          }
+        }
+
+        setIsStatusWriterEnded(data.is_complete || false)
+        setBook(data)
+        setEpisodes(data.episodes || [])
       } catch (err) {
         console.error("ไม่สามารถโหลดข้อมูลหนังสือได้:", err)
       }
@@ -59,21 +62,23 @@ export default function BookDetailPage() {
     fetchBook()
   }, [id, user, isLoading])
 
+  // ฟังก์ชันปลดล็อก episode เฉพาะตัว
   const handleUnlockEpisode = (eid) => {
     setEpisodes((prev) =>
       prev.map((ep) => (ep.id === eid ? { ...ep, isLocked: false, price: null } : ep))
     )
   }
 
+  // ปลดล็อกทุก episode
   const unlockAllEpisodes = () => {
     setEpisodes((prev) => prev.map((ep) => ({ ...ep, isLocked: false, price: null })))
   }
 
-
+  // อัพเดตสถานะหนังสือ (จบหรือไม่)
   const handleSetIsStatusWriterEnded = async (value) => {
     setIsStatusWriterEnded(value)
 
-    if (user?.user?.id && id) {
+    if (user?.id && id) {
       try {
         await updateIsComplete(id, value)
       } catch (err) {
@@ -82,10 +87,18 @@ export default function BookDetailPage() {
     }
   }
 
-
   if (!book) {
-    return <div className="text-white p-8">Loading books...</div>
+    return <div className="text-white p-8">Loading book...</div>
   }
+
+  // ช่วยให้แน่ใจว่า URL รูปภาพต่อกันถูกต้อง
+  const coverUrl = book.cover_image
+    ? `${process.env.NEXT_PUBLIC_API_URL}/uploads/books/${book.cover_image}`
+    : null
+
+  const authorAvatar = book.avatar_image
+    ? `${process.env.NEXT_PUBLIC_API_URL}/uploads/avatars/${book.avatar_image}`
+    : "https://bootstrapdemos.adminmart.com/modernize/dist/assets/images/profile/user-1.jpg"
 
   return (
     <div className="min-h-screen bg-custom-bg flex">
@@ -96,9 +109,9 @@ export default function BookDetailPage() {
         <div className="min-h-screen bg-custom-bg text-white p-8">
           <div className="flex gap-8 mb-8">
             <div className="flex-shrink-0">
-              {book.cover_url ? (
+              {coverUrl ? (
                 <img
-                  src={`${process.env.NEXT_PUBLIC_API_URL}${book.cover_url}`}
+                  src={coverUrl}
                   alt={book.title}
                   className="w-80 h-96 object-cover rounded-lg shadow-2xl"
                 />
@@ -119,17 +132,13 @@ export default function BookDetailPage() {
               title={book.title}
               author={book.pen_name || book.username || "Unknown"}
               description={book.description}
-              authorAvatar={
-                book.avatar_url
-                  ? `${process.env.NEXT_PUBLIC_API_URL}${book.avatar_url}`
-                  : "https://bootstrapdemos.adminmart.com/modernize/dist/assets/images/profile/user-1.jpg"
-              }
+              authorAvatar={authorAvatar}
               isStatusWriterEnded={isStatusWriterEnded}
               isAuthor={isAuthor}
               bookId={id}
-              category={book.category || "Uncategorized"}
+              category={book.categories || "Uncategorized"}
               followers={book.followers || 0}
-              userId={user?.user?.id || null}
+              userId={user?.id || null}
             />
           </div>
 
@@ -153,17 +162,20 @@ export default function BookDetailPage() {
                   </label>
                 </div>
               ) : (
-                
                 <div
                   role="button"
                   tabIndex={0}
                   className="inline-flex items-center bg-mint-light hover:bg-mint-dark text-white font-semibold px-6 py-2 rounded cursor-pointer select-none"
                   onClick={unlockAllEpisodes}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      unlockAllEpisodes()
+                    }
+                  }}
                 >
                   Unlock all episodes
                   <span className="ml-2 bg-gray-800 text-mint-light px-2 py-1 rounded text-sm">125 C</span>
                 </div>
-                
               )}
             </div>
 
