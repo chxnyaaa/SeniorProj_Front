@@ -102,7 +102,7 @@ const handleSeek = (value) => {
           setEpisode(res.detail)
         }
       } catch (error) {
-        console.error("Error fetching episode:", error)
+        console.error("Error fetching Chapter:", error)
       }
     }
 

@@ -120,7 +120,7 @@ export default function HistoryPage() {
                           <th className="px-4 py-2 border-b border-gray-700">#</th>
                           <th className="px-4 py-2 border-b border-gray-700">Book Title</th>
                           <th className="px-4 py-2 border-b border-gray-700">Episode Title</th>
-                          <th className="px-4 py-2 border-b border-gray-700">Device</th>
+                          <th className="px-4 py-2 border-b border-gray-700">Access</th>
                           <th className="px-4 py-2 border-b border-gray-700">IP Address</th>
                           <th className="px-4 py-2 border-b border-gray-700">Viewed At</th>
                         </tr>
