@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef  } from "react"
 import BookInfo from "@/components/ui/BookInfo"
 import EpisodesList from "@/components/ui/EpisodesList"
 import Sidebar from "@/components/ui/Sidebar"
 import Header from "@/components/ui/Header"
-import { getBookId, updateIsComplete, getIsFollowing } from "@/lib/api/book"
+import { getBookId, updateIsComplete, getIsFollowing, addUserUpdateHistory } from "@/lib/api/book"
 import { useParams, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -22,15 +22,12 @@ export default function BookDetailPage() {
   const [isStatusWriterEnded, setIsStatusWriterEnded] = useState(false)
   const { user, logout, isLoading } = useAuth()
   const router = useRouter()
+  
+  const hasUpdatedHistory = useRef(false);
 
 
   useEffect(() => {
     if (isLoading) return
-    // ถ้าต้องการ redirect ไป login ถ้าไม่มี user ให้ uncomment ด้านล่าง
-    // if (!user) {
-    //   router.push("/login")
-    //   return
-    // }
     if (!id) return
 
     const fetchBook = async () => {
@@ -61,6 +58,26 @@ export default function BookDetailPage() {
 
     fetchBook()
   }, [id, user, isLoading])
+
+  
+  useEffect(() => {
+    const updateHistory = async () => {
+      if (!user?.id || !id) return;
+      if (hasUpdatedHistory.current) return; // ✅ ป้องกันซ้ำ
+
+      try {
+        await addUserUpdateHistory(user.id, id, null);
+        hasUpdatedHistory.current = true;
+        console.log("Update history added");
+      } catch (err) {
+        console.error("ไม่สามารถอัปเดต history ได้:", err);
+      }
+    }
+
+    updateHistory();
+  }, [user?.id, id]);
+
+
 
   // ฟังก์ชันปลดล็อก episode เฉพาะตัว
   const handleUnlockEpisode = (eid) => {
