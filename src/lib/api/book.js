@@ -438,3 +438,46 @@ export async function BayPurchase(userId, bookId, episodeId, amount) {
     }
   }
 }
+
+
+export async function getHistory(userId) {
+  try {
+    const res = await axios.post(`${BASE_URL}/api/user/history`, {
+      userId: userId,
+    }, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
+    return res.data
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch history")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+} 
+
+export async function addUserUpdateHistory(userId, bookId, episodeId) {
+  try {
+    const res = await axios.post(`${BASE_URL}/api/user/update-history`, {
+      userId: userId,
+      bookId: bookId,
+      episodeId: episodeId,
+      device: "", // Add device information if available
+      ipAddress: ""
+    }, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
+    return res.data
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to add user update history")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}

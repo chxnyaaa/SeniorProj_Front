@@ -6,7 +6,7 @@ import { Play, Pause } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { useAuth } from "@/contexts/AuthContext"
-import { getEpisodeId } from "@/lib/api/book"
+import { getEpisodeId,addUserUpdateHistory } from "@/lib/api/book"
 import { useRouter } from "next/navigation"
 
 const url = process.env.NEXT_PUBLIC_API_URL
@@ -108,6 +108,20 @@ const handleSeek = (value) => {
 
     fetchEpisode()
   }, [user, loadingUser, router])
+
+    useEffect(() => {
+    const updateHistory = async () => {
+      try {
+        await addUserUpdateHistory(user.id, bookId, episodeId)
+      } catch (err) {
+        console.error("ไม่สามารถอัปเดต history ได้:", err)
+      }
+    }
+
+    if (user?.id && bookId && episodeId) {
+      updateHistory()
+    }
+  }, [user?.id, bookId, episodeId])
 
   if (loadingUser) {
     return <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>

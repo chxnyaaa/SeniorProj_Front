@@ -40,7 +40,7 @@ export default function Sidebar() {
             <Calendar className="w-4 h-4" />
             Daily
           </TextLink>
-          <TextLink href="/" className="w-full flex items-center gap-3 text-white hover:bg-gray-700 p-2 rounded">
+          <TextLink href="/History" className="w-full flex items-center gap-3 text-white hover:bg-gray-700 p-2 rounded">
             <Clock className="w-4 h-4" />
             History
           </TextLink>
