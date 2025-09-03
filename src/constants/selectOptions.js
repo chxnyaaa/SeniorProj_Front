@@ -14,3 +14,8 @@ export const statusOptions = [
   { value: "published", label: "Published" },
   { value: "archived", label: "Archived" },
 ]
+export const soundOptions = [
+  { value: "103", label: "Elvin" },
+  { value: "100", label: "Irene" },
+  { value: "99", label: "Polly" },
+]

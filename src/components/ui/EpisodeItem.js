@@ -38,7 +38,6 @@ export default function EpisodeItem({ episode, onUnlock, isAuthor, id }) {
     async function fetchData() {
       try {
         const historyRes = await getHistoryPurchase(userId, bookId)
-        console.log("Purchase history response:", historyRes.detail[0].episode_id)
         if (historyRes?.status_code === 200 && Array.isArray(historyRes.detail) && historyRes.detail[0].episode_id === episodeId) {
           // ถ้าซื้อแล้วให้ unlock
           if (historyRes.detail.length > 0) {

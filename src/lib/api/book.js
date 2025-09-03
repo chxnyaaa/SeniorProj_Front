@@ -336,7 +336,7 @@ export async function createBook(data) {
       },
     })
 
-    return res.data.data
+    return res.data
 
   } catch (error) {
     if (error.response) {
@@ -464,9 +464,7 @@ export async function addUserUpdateHistory(userId, bookId, episodeId) {
     const res = await axios.post(`${BASE_URL}/api/user/update-history`, {
       userId: userId,
       bookId: bookId,
-      episodeId: episodeId,
-      device: "", // Add device information if available
-      ipAddress: ""
+      episodeId: episodeId
     }, {
       headers: {
         Authorization: getBasicAuthHeader(),

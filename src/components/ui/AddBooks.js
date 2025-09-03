@@ -22,6 +22,7 @@ export default function AddBooks({ isEdit = false, editId = null }) {
   const [authorId, setAuthorId] = useState(null)
   const [loadingUser, setLoadingUser] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [existingCoverUrl, setExistingCoverUrl] = useState(null)
 
   useEffect(() => {
     if (user !== undefined) {
@@ -53,6 +54,7 @@ export default function AddBooks({ isEdit = false, editId = null }) {
 
         setTitle(data.title || "")
         setDescription(data.description || "")
+        setExistingCoverUrl(data.cover_image || null)
 
         if (Array.isArray(data.categories)) {
           setCategories(data.categories.map(cat => ({
@@ -134,12 +136,21 @@ export default function AddBooks({ isEdit = false, editId = null }) {
       userId: authorId
     }
 
+    // validate value in payload
+    if (!title || !description || !categories.length  || !releaseDate || !status || (!booksFile && !existingCoverUrl)) {
+      alert("Please fill in all fields.")
+      setSaving(false)
+      return
+    }
+
     try {
       const result = await updateBook(payload)
+      console.log("Save book result:", result)
       if (result && (result.status_code === 201 || result.status_code === 200)) {
         const bookId = result?.detail?.bookId || editId
         if (bookId) {
-          router.push(`/add-books/${bookId}`)
+          // router.push(`/add-books/${bookId}`)
+          router.push(`/book/${bookId}`)
         } else {
           throw new Error("Book ID not found after saving")
         }

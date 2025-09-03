@@ -102,7 +102,7 @@ const handleSeek = (value) => {
           setEpisode(res.detail)
         }
       } catch (error) {
-        console.error("Error fetching Chapter:", error)
+        console.error("Error fetching episode:", error)
       }
     }
 
@@ -142,6 +142,7 @@ const handleSeek = (value) => {
   return (
     <>
       {!loadingUser && episode && (
+        <>
         <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 flex flex-col items-center">
             {/* รูปปก */}
@@ -189,8 +190,17 @@ const handleSeek = (value) => {
             >
               {isPlaying ? <Pause className="w-16 h-16" /> : <Play className="w-16 h-16 ml-1" />}
             </Button>
+
+            {/* ปุ่มย้อนกลับ */}
+            <Button
+              onClick={() => router.back()}
+              className="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800"
+            >
+              Back
+            </Button>
           </div>
         </div>
+        </>
       )}
     </>
   )

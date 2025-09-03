@@ -60,22 +60,22 @@ export default function BookDetailPage() {
   }, [id, user, isLoading])
 
   
-  useEffect(() => {
-    const updateHistory = async () => {
-      if (!user?.id || !id) return;
-      if (hasUpdatedHistory.current) return; // ✅ ป้องกันซ้ำ
+  // useEffect(() => {
+  //   const updateHistory = async () => {
+  //     if (!user?.id || !id) return;
+  //     if (hasUpdatedHistory.current) return; // ✅ ป้องกันซ้ำ
 
-      try {
-        await addUserUpdateHistory(user.id, id, null);
-        hasUpdatedHistory.current = true;
-        console.log("Update history added");
-      } catch (err) {
-        console.error("ไม่สามารถอัปเดต history ได้:", err);
-      }
-    }
+  //     try {
+  //       await addUserUpdateHistory(user.id, id, null);
+  //       hasUpdatedHistory.current = true;
+  //       console.log("Update history added");
+  //     } catch (err) {
+  //       console.error("ไม่สามารถอัปเดต history ได้:", err);
+  //     }
+  //   }
 
-    updateHistory();
-  }, [user?.id, id]);
+  //   updateHistory();
+  // }, [user?.id, id]);
 
 
 
