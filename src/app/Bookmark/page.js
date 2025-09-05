@@ -154,6 +154,10 @@ export default function LibraryPage() {
   }
 
   return (
+    
+
+            
+
     <div className="min-h-screen bg-custom-bg flex">
       <CustomAlertModal
         show={showModal}
@@ -174,6 +178,16 @@ export default function LibraryPage() {
         <Header onSearch={setSearchTerm} />
 
         <main className="flex-1 p-6 overflow-y-auto">
+
+             <h1 className="text-2xl font-bold mb-4">
+               Bookmark
+
+              </h1>
+              <p className="mb-4">
+                Bookmarked books will appear here. 
+              </p>
+
+
           <GenreFilter
             genreOptions={genreOptions}
             selectedGenres={selectedGenres}
@@ -181,9 +195,10 @@ export default function LibraryPage() {
             clearSelection={clearGenres}
           />
 
+         
           {debouncedSearchTerm && (
             <div className="text-white mb-4">
-              ผลการค้นหา: <strong>{debouncedSearchTerm}</strong>
+              Search results: <strong>{debouncedSearchTerm}</strong>
             </div>
           )}
 

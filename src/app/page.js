@@ -166,7 +166,7 @@ export default function LibraryPage() {
       />
 
       <div className="flex-1 flex flex-col">
-        <Header onSearch={setSearchTerm} />
+          <Header onSearch={setSearchTerm} />
 
         <main className="flex-1 p-6 overflow-y-auto">
           <GenreFilter
@@ -178,7 +178,7 @@ export default function LibraryPage() {
 
           {debouncedSearchTerm && (
             <div className="text-white mb-4">
-              ผลการค้นหา: <strong>{debouncedSearchTerm}</strong>
+              Search results: <strong>{debouncedSearchTerm}</strong>
             </div>
           )}
 

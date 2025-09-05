@@ -13,7 +13,7 @@ export default function AddEpisodes({ isEdit = false, editId = null, bookId, rou
   const [chapterTitle, setChapterTitle] = useState("")
   const [chapterContent, setChapterContent] = useState("")
   const [releaseDate, setReleaseDate] = useState("")
-  const [price, setPrice] = useState("")
+  const [price, setPrice] = useState(0)
   const [imageFile, setImageFile] = useState(null)
   const [coverPreview, setCoverPreview] = useState(null)
   const [status, setStatus] = useState("draft")
@@ -32,11 +32,12 @@ export default function AddEpisodes({ isEdit = false, editId = null, bookId, rou
       getEpisodeID(bookId, editId)
         .then(episodeArr => {
           const episode = episodeArr.detail || {}
+          console.log("Fetched episode:", episode)
           if (!episode) return
           setChapterTitle(episode.title || "")
           setChapterContent(episode.content || "")
           setReleaseDate(episode.release_date ? new Date(episode.release_date).toISOString().split("T")[0] : "")
-          setPrice(episode.price || "")
+          setPrice(episode.price || 0)
           setStatus(episode.status || "draft")
           setPriority(episode.priority || "")
           setExistingCoverUrl(episode.cover || null)
@@ -63,7 +64,15 @@ export default function AddEpisodes({ isEdit = false, editId = null, bookId, rou
   }
 
   const handleSubmit = async () => {
-    if (!bookId || !chapterTitle || !chapterContent) return alert("Please fill in all required fields.")
+    // if (!bookId || !chapterTitle || !chapterContent) return alert("Please fill in all required fields.")
+  
+    if (!priority) return alert("Please fill in Episode")
+    if (!chapterTitle) return alert("Please fill in Chapter Title")
+    if (!releaseDate) return alert("Please fill in Release Date")
+    if (!chapterContent) return alert("Please fill in Chapter Content")
+    if (!imageFile && !existingCoverUrl) return alert("Please upload a Chapter Image")
+
+
     const data = {
       book_id: bookId,
       user_id: userId,

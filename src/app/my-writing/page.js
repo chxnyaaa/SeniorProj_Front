@@ -10,6 +10,7 @@ import CustomAlertModal from "@/components/ui/CustomAlertModal"
 import { useAuth } from "@/contexts/AuthContext"
 import { getBookMy } from "@/lib/api/book"
 import { useRouter } from "next/navigation"
+import TextLink from "@/components/ui/TextLink"
 
 export default function MyWritingPage() {
   const { user } = useAuth()
@@ -101,12 +102,8 @@ export default function MyWritingPage() {
 
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">My Writing</h1>
-            <a
-              href="/add-books"
-              className="bg-mint-light text-white px-4 py-2 rounded hover:bg-mint-dark transition-colors"
-            >
-              Create New Book
-            </a>
+            
+            <Button onClick={() => router.push("/add-books")}>Create New Book</Button>
           </div>
 
 
@@ -129,13 +126,27 @@ export default function MyWritingPage() {
                     <td className="px-4 py-2">{book.favorites_count ?? 0}</td>
                     <td className="px-4 py-2">{book.purchases_count ?? 0}</td>
                     <td className="px-4 py-2">
-                      <Button className="ml-2" onClick={() => router.push(`/book/${book.id}`)}>
+
+                      {/* <Button className="ml-2" onClick={() => router.push(`/book/${book.id}`)}>
                         Episode
                       </Button>
                       <Button className="ml-2" onClick={() => router.push(`/add-books/${book.id}`)}>
                         Edit
-                      </Button>
-                      {/* <Button className="ml-2" onClick={() => {}}>Delete</Button> */}
+                      </Button> */}
+
+                      
+
+
+
+            <TextLink href={`/book/${book.id}`} className="text-mint-light hover:text-mint-dark transition-colors font-medium  mr-2">
+              Episode
+            </TextLink>
+            /
+            <TextLink href={`/add-books/${book.id}`} className="text-mint-light hover:text-mint-dark transition-colors font-medium ml-2">
+              Edit
+            </TextLink>
+
+
                     </td>
                   </tr>
                 ))

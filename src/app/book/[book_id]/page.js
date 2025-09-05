@@ -1,11 +1,20 @@
 "use client"
 
-import { useState, useEffect, useRef  } from "react"
+import { useState, useEffect, useRef } from "react"
 import BookInfo from "@/components/ui/BookInfo"
 import EpisodesList from "@/components/ui/EpisodesList"
 import Sidebar from "@/components/ui/Sidebar"
 import Header from "@/components/ui/Header"
-import { getBookId, updateIsComplete, getIsFollowing, addUserUpdateHistory } from "@/lib/api/book"
+import AlertModalBuyEpisode from "@/components/ui/AlertModalBuyEpisode"
+import {
+  getBookId,
+  updateIsComplete,
+  getIsFollowing,
+  addUserUpdateHistory,
+  getCoins,
+  getHistoryPurchaseAll,
+  buyBookEpisodesAll
+} from "@/lib/api/book"
 import { useParams, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -20,11 +29,15 @@ export default function BookDetailPage() {
   const [isAuthor, setIsAuthor] = useState(false)
   const [episodes, setEpisodes] = useState([])
   const [isStatusWriterEnded, setIsStatusWriterEnded] = useState(false)
+  const [coins, setCoins] = useState(0)
   const { user, logout, isLoading } = useAuth()
   const router = useRouter()
-  
-  const hasUpdatedHistory = useRef(false);
+  const [totalPrice, setTotalPrice] = useState(0)
+  const [listArrayEpisodeId, setListArrayEpisodeId] = useState([])
+  const [isLoadingUnlockAll, setIsLoadingUnlockAll] = useState(false)
+  const [modalShow, setModalShow] = useState(false)
 
+  const hasUpdatedHistory = useRef(false)
 
   useEffect(() => {
     if (isLoading) return
@@ -36,7 +49,6 @@ export default function BookDetailPage() {
         const data = dataArr.detail || {}
         setRating(data.avg_rating || 0)
 
-      
         if (user && user.id && data.user_id) {
           if (user.id == data.user_id) {
             setIsAuthor(true)
@@ -50,6 +62,8 @@ export default function BookDetailPage() {
 
         setIsStatusWriterEnded(data.is_complete || false)
         setBook(data)
+
+        // episodes จะถูกอัพเดตทีหลังหลังจากเช็คประวัติการซื้อ
         setEpisodes(data.episodes || [])
       } catch (err) {
         console.error("ไม่สามารถโหลดข้อมูลหนังสือได้:", err)
@@ -59,25 +73,29 @@ export default function BookDetailPage() {
     fetchBook()
   }, [id, user, isLoading])
 
-  
-  // useEffect(() => {
-  //   const updateHistory = async () => {
-  //     if (!user?.id || !id) return;
-  //     if (hasUpdatedHistory.current) return; // ✅ ป้องกันซ้ำ
+  // ✅ โหลด coins + ประวัติการซื้อ เพื่อ unlock ตอนที่เคยซื้อแล้ว
+  useEffect(() => {
+    if (!user?.id || !id) return
 
-  //     try {
-  //       await addUserUpdateHistory(user.id, id, null);
-  //       hasUpdatedHistory.current = true;
-  //       console.log("Update history added");
-  //     } catch (err) {
-  //       console.error("ไม่สามารถอัปเดต history ได้:", err);
-  //     }
-  //   }
+    const fetchPurchaseData = async () => {
+      try {
+        // get-data-purchases-all
+        const historyRes = await getHistoryPurchaseAll(user.id, id)
+        // console.log("BookDetailPage Purchase history:", historyRes, user.id, id)
+        let historyRes_data = historyRes?.detail || []
+        let totalPrice = historyRes_data.totalPrice || 0;
+        let listArrayEpisodeId = historyRes_data.list_array_episode_id || []
+        setTotalPrice(totalPrice)
+        setListArrayEpisodeId(listArrayEpisodeId)
+        const coinsRes = await getCoins(user.id)
+        setCoins(coinsRes.detail?.totalCoins || 0)
+      } catch (error) {
+        console.error("Error fetching purchase/coin data:", error)
+      }
+    }
 
-  //   updateHistory();
-  // }, [user?.id, id]);
-
-
+    fetchPurchaseData()
+  }, [user?.id, id])
 
   // ฟังก์ชันปลดล็อก episode เฉพาะตัว
   const handleUnlockEpisode = (eid) => {
@@ -87,9 +105,29 @@ export default function BookDetailPage() {
   }
 
   // ปลดล็อกทุก episode
-  const unlockAllEpisodes = () => {
-    setEpisodes((prev) => prev.map((ep) => ({ ...ep, isLocked: false, price: null })))
+ // ปลดล็อกทุก episode
+  const unlockAllEpisodes = async () => {
+    // setIsLoadingUnlockAll(true) // ✅ เริ่มโหลด
+    // setModalShow(true)
+    
+      const EpisodesRes = await buyBookEpisodesAll(user.id, id, listArrayEpisodeId, totalPrice)
+      if (EpisodesRes && EpisodesRes.status_code == 200) {
+        window.location.reload()
+      } else {
+        alert(EpisodesRes.detail || "Failed to unlock all episodes.")
+        // setIsLoadingUnlockAll(false) // ✅ เริ่มโหลด
+      }
   }
+
+  const handleConfirmBuy = () => {
+    setModalShow(false)
+    unlockAllEpisodes()
+  }
+  const handleCancelBuy = () => {
+    setModalShow(false)
+    setIsLoadingUnlockAll(false) // ✅ เริ่มโหลด
+  }
+
 
   // อัพเดตสถานะหนังสือ (จบหรือไม่)
   const handleSetIsStatusWriterEnded = async (value) => {
@@ -118,6 +156,7 @@ export default function BookDetailPage() {
     : "https://bootstrapdemos.adminmart.com/modernize/dist/assets/images/profile/user-1.jpg"
 
   return (
+   <>
     <div className="min-h-screen bg-custom-bg flex">
       <Sidebar currentlyPlaying={currentlyPlaying} setCurrentlyPlaying={setCurrentlyPlaying} />
       <div className="flex-1 flex flex-col">
@@ -179,27 +218,53 @@ export default function BookDetailPage() {
                   </label>
                 </div>
               ) : (
-                <div
+                <>
+                {totalPrice > 0 && (
+
+                  <div
                   role="button"
                   tabIndex={0}
-                  className="inline-flex items-center bg-mint-light hover:bg-mint-dark text-white font-semibold px-6 py-2 rounded cursor-pointer select-none"
-                  onClick={unlockAllEpisodes}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      unlockAllEpisodes()
-                    }
-                  }}
+                  className={`inline-flex items-center font-semibold px-6 py-2 rounded cursor-pointer select-none ${
+                    isLoadingUnlockAll ? "bg-gray-500 cursor-not-allowed" : "bg-mint-light hover:bg-mint-dark text-white"
+                  }`}
+                  onClick={!isLoadingUnlockAll ? () => setModalShow(true) : undefined}
                 >
-                  Unlock all episodes
-                  <span className="ml-2 bg-gray-800 text-mint-light px-2 py-1 rounded text-sm">125 C</span>
+                  {isLoadingUnlockAll ? "Processing..." : "Unlock all episodes"}
+                  {!isLoadingUnlockAll && (
+                    <span className="ml-2 bg-gray-800 text-mint-light px-2 py-1 rounded text-sm">
+                      {totalPrice} C
+                    </span>
+                  )}
                 </div>
+
+                )}
+                
+                </>
               )}
             </div>
 
-            <EpisodesList episodes={episodes} onUnlock={handleUnlockEpisode} isAuthor={isAuthor} id={id} />
+            <EpisodesList
+              episodes={episodes}
+              onUnlock={handleUnlockEpisode}
+              isAuthor={isAuthor}
+              id={id}
+            />
           </div>
         </div>
       </div>
     </div>
+    
+      {/* Modal confirm ซื้อ episode */}
+      <AlertModalBuyEpisode
+        show={modalShow}
+        type="info"
+        title="Buy Episode"
+        message={`Are you sure you want to buy "${book.title}" for ${totalPrice} C?`}
+        coinCost={totalPrice}
+        userCoinBalance={coins}
+        onConfirm={handleConfirmBuy}
+        onCancel={handleCancelBuy}
+      />
+   </>
   )
 }

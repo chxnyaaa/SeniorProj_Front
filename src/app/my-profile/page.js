@@ -133,6 +133,7 @@ export default function MyProfilePage() {
         title: "Profile Updated",
         message: "Your profile has been updated successfully.",
       })
+      window.location.reload();
     } else {
       setModalInfo({
         type: "error",

@@ -157,7 +157,7 @@ export default function LibraryPage() {
 
           {searchTerm && (
             <div className="text-white mb-4">
-              ผลการค้นหา: <strong>{searchTerm}</strong>
+              Search results: <strong>{searchTerm}</strong>
             </div>
           )}
 

@@ -38,10 +38,13 @@ export default function EpisodeItem({ episode, onUnlock, isAuthor, id }) {
     async function fetchData() {
       try {
         const historyRes = await getHistoryPurchase(userId, bookId)
-        if (historyRes?.status_code === 200 && Array.isArray(historyRes.detail) && historyRes.detail[0].episode_id === episodeId) {
-          // ถ้าซื้อแล้วให้ unlock
-          if (historyRes.detail.length > 0) {
-            setIsLocked(false)
+        if (historyRes?.status_code === 200 && Array.isArray(historyRes.detail)) {
+
+          let data_list_episode_id = historyRes.detail.map(item => item.episode_id) || []
+          for (let eid of data_list_episode_id) {
+            if (eid === episodeId) {
+              setIsLocked(false)
+            }
           }
         }
 
@@ -144,9 +147,11 @@ export default function EpisodeItem({ episode, onUnlock, isAuthor, id }) {
 
               {/* Badge แสดงราคา หรือ Free เฉพาะตอนที่ยัง locked */}
               {isLocked && (
+               <>
                 <Badge className={episodePriceNum > 0 ? "bg-teal-300 text-black" : "bg-gray-600 text-white"}>
                   {episodePriceNum > 0 ? `${episodePriceNum} C` : "Free"}
                 </Badge>
+               </>
               )}
             </div>
             <div className="text-sm">{dateStr}</div>

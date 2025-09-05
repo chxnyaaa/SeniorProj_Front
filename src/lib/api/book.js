@@ -479,3 +479,104 @@ export async function addUserUpdateHistory(userId, bookId, episodeId) {
     }
   }
 }
+
+export async function getHistoryPurchaseAll(userId,bookId) {
+  try {
+    const res = await axios.post(`${BASE_URL}/api/user/get-data-purchases-all`, {
+      userId: userId,
+      bookId: bookId,
+    }, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
+    return res.data
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch purchase history all")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}
+
+export async function buyBookEpisodesAll(userId, bookId, list_episodes = [], totalPrice = 0) {
+  try {
+    const res = await axios.post(`${BASE_URL}/api/purchases/buy-book-episodes-all`, {
+      userId: userId,
+      bookId: bookId,
+      listEpisodes: list_episodes,
+      totalPrice: totalPrice
+    }, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
+    return res.data
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to purchase all episodes")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}
+
+export async function getAudio(userId) {
+  try {
+    const res = await axios.post(
+      `${BASE_URL}/api/user/audio/`,
+      { userId: userId },
+      {
+        headers: {
+          Authorization: getBasicAuthHeader(),
+        },
+      }
+    )
+    return res.data
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch audio")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}
+export async function getNotification(userId) {
+  try {
+    const res = await axios.post(`${BASE_URL}/api/user/get_notification`, {
+      userId: userId,
+    }, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
+    return res.data
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to fetch notifications")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}
+
+export async function activeNotification(userId, episodeId) {
+  try {
+    const res = await axios.post(`${BASE_URL}/api/user/active_notification`, {
+      userId: userId,
+      episodeId: episodeId,
+    }, {
+      headers: {
+        Authorization: getBasicAuthHeader(),
+      },
+    })
+    return res.data
+  } catch (error) {
+    if (error.response) {
+      throw new Error(error.response.data.message || "Failed to activate notification")
+    } else {
+      throw new Error(error.message || "Network Error")
+    }
+  }
+}
