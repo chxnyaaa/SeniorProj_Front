@@ -31,8 +31,9 @@ export default function NowPlaying() {
         if(!user) return
         const res = await getAudio(user.id)
         if(res.status_code === 200) {
-          setAudioSrc(res.detail[0].audio_url)
-          if(res.detail[0].cover){
+          // setAudioSrc(res.detail[0].audio_url)
+          setAudioSrc(res.detail[0]?.audio_url || "/audio/sample.mp3")
+          if(res.detail[0]?.cover){
             let seturl = `${process.env.NEXT_PUBLIC_API_URL || url}/uploads/cover/${res.detail[0].cover}`
             setImagesSrc(seturl)
           }
