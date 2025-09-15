@@ -10,6 +10,7 @@ import CustomAlertModal from "@/components/ui/CustomAlertModal"
 import { useAuth } from "@/contexts/AuthContext"
 import { getBookMy } from "@/lib/api/book"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function MyWritingPage() {
   const { user } = useAuth()
@@ -101,12 +102,6 @@ export default function MyWritingPage() {
 
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold">My Writing</h1>
-            {/* <a
-              href="/add-books"
-              className="bg-mint-light text-white px-4 py-2 rounded hover:bg-mint-dark transition-colors"
-            >
-              Create New Book
-            </a> */}
            
             <Link
               href={`/add-books`}

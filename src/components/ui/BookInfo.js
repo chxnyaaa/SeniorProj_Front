@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Bookmark, Heart } from "lucide-react"
 import {updateFollow, updateRating } from "@/lib/api/book"
+import Link from "next/link"
 
 export default function BookInfo(
   { rating
