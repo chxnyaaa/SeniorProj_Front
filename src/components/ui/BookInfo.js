@@ -86,7 +86,7 @@ const handleRating = async (newRating) => {
         </h1>
 
           {isAuthor ? (
-        <a
+        <Link
           href={`/add-books/${bookId}`} // แก้ id เป็นตัวแปรจริงจาก props/state
           className="cursor-pointer p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center justify-center"
           aria-label="Edit book"
@@ -94,7 +94,7 @@ const handleRating = async (newRating) => {
          <button className="w-6 h-6 text-teal-400 hover:text-mint-light transition-colors">
             Edit
          </button>
-        </a>
+        </Link>
 
       ) : (
         <></>
