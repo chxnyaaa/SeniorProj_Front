@@ -136,7 +136,7 @@ export default function LoginPage() {
         <div className="text-center max-w-md">
           <h2 className="text-4xl font-bold text-mint-light mb-6">Welcome back!</h2>
           <p className="text-gray-light text-lg leading-relaxed mb-8">
-            We're happy to see you again. Log in to access your dashboard and continue where you left off.
+            We&apos;re happy to see you again. Log in to access your dashboard and continue where you left off.
           </p>
           <div className="text-gray-light">
             <span>No account yet? </span>

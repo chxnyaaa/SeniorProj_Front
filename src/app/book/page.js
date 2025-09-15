@@ -27,7 +27,7 @@ export default function LibraryPage() {
     { title: "Never a Hero", rating: 5, cover: "https://m.media-amazon.com/images/I/511P7eN21YL._AC_UY399_FMwebp_.jpg?aicid=books-design-system-web?height=200&width=150" },
     { title: "The Darkening", rating: 5, cover: "https://m.media-amazon.com/images/I/511P7eN21YL._AC_UY399_FMwebp_.jpg?aicid=books-design-system-web?height=200&width=150" },
     { title: "Dames and Demons", rating: 4, cover: "https://m.media-amazon.com/images/I/511P7eN21YL._AC_UY399_FMwebp_.jpg?aicid=books-design-system-web?height=200&width=150" },
-    { title: "Dragon's Whisper", rating: 4, cover: "https://m.media-amazon.com/images/I/511P7eN21YL._AC_UY399_FMwebp_.jpg?aicid=books-design-system-web?height=200&width=150" },
+    { title: "Dragon&apos;s Whisper", rating: 4, cover: "https://m.media-amazon.com/images/I/511P7eN21YL._AC_UY399_FMwebp_.jpg?aicid=books-design-system-web?height=200&width=150" },
   ]
 
   const romanceBooks = [
