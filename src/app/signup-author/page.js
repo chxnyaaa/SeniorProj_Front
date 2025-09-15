@@ -64,7 +64,7 @@ export default function SignupPage() {
         <div className="text-center max-w-md">
           <h2 className="text-4xl font-bold text-mint-light mb-6">Come join us!</h2>
           <p className="text-gray-light text-lg leading-relaxed mb-8">
-            We are so excited to have you here. If you haven't already, create an account to get access to exclusive offers.
+            We are so excited to have you here. If you haven t already, create an account to get access to exclusive offers.
           </p>
           <div className="text-gray-light">
             <span>Already have an account? </span>
