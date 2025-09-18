@@ -52,7 +52,7 @@ export default function SignupPage() {
         setModalInfo({
           type: "success",
           title: "Signup Successful",
-          message: result.detail || "You have successfully signed up.",
+          message: "You have successfully signed up.",
         })
         setShowModal(true)
         return
@@ -60,7 +60,7 @@ export default function SignupPage() {
         setModalInfo({
           type: "error",
           title: "Signup Failed",
-          message: result.detail || "An error occurred during signup.",
+          message: "An error occurred during signup.",
         })
         setShowModal(true)
       }
